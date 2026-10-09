@@ -7,6 +7,8 @@ import com.applyai.backend.dto.jobapplication.UpdateJobApplicationRequest;
 import com.applyai.backend.entity.ApplicationStatus;
 import com.applyai.backend.entity.JobApplication;
 import com.applyai.backend.entity.User;
+import com.applyai.backend.exception.JobApplicationNotFoundException;
+import com.applyai.backend.exception.UserNotFoundException;
 import com.applyai.backend.repository.JobApplicationRepository;
 import com.applyai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,7 @@ public class JobApplicationService {
 
     public CreateJobApplicationResponse create(CreateJobApplicationRequest dto, String userEmail){
 
-        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new RuntimeException("User not found"));
+        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new UserNotFoundException("User not found"));
 
         JobApplication jobApplication=JobApplication.builder()
                 .companyName(dto.getCompanyName())
@@ -43,7 +45,7 @@ public class JobApplicationService {
     }
 
     public List<CreateJobApplicationResponse> getAll(String userEmail){
-        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new RuntimeException("User not found"));
+        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new UserNotFoundException("User not found"));
 
         List<JobApplication> jobApplications=jobApplicationRepository.findAllByUserId(user.getId());
 
@@ -53,9 +55,9 @@ public class JobApplicationService {
 
     public CreateJobApplicationResponse getById(Long id, String userEmail){
 
-        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new RuntimeException("User not found"));
+        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new UserNotFoundException("User not found"));
 
-        JobApplication jobApplication=jobApplicationRepository.findByIdAndUserId(id,user.getId()).orElseThrow(()->new RuntimeException("Job application not found"));
+        JobApplication jobApplication=jobApplicationRepository.findByIdAndUserId(id,user.getId()).orElseThrow(()->new JobApplicationNotFoundException("Job application not found"));
 
         return mapToResponse(jobApplication);
     }
@@ -63,9 +65,9 @@ public class JobApplicationService {
     public CreateJobApplicationResponse update(Long id, UpdateJobApplicationRequest dto,
                                                String userEmail){
 
-        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new RuntimeException("User not found"));
+        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new UserNotFoundException("User not found"));
 
-        JobApplication application=jobApplicationRepository.findByIdAndUserId(id,user.getId()).orElseThrow(()->new RuntimeException("Job application not found"));
+        JobApplication application=jobApplicationRepository.findByIdAndUserId(id,user.getId()).orElseThrow(()->new JobApplicationNotFoundException("Job application not found"));
 
         application.setCompanyName(dto.getCompanyName());
         application.setPosition(dto.getPosition());
@@ -79,6 +81,16 @@ public class JobApplicationService {
 
         return mapToResponse(updated);
 
+    }
+
+
+    public void delete(Long id, String userEmail){
+
+        User user=userRepository.findByEmail(userEmail).orElseThrow(()->new RuntimeException("User not found"));
+
+        JobApplication application=jobApplicationRepository.findByIdAndUserId(id,user.getId()).orElseThrow(()->new JobApplicationNotFoundException("Job application not found"));
+
+        jobApplicationRepository.delete(application);
     }
 
     private CreateJobApplicationResponse mapToResponse(JobApplication jobApplication){

@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 
@@ -43,5 +45,11 @@ public class JobApplicationController {
                                                @Valid UpdateJobApplicationRequest dto,
                                                @AuthenticationPrincipal String userEmail) {
         return jobApplicationService.update(id, dto, userEmail);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id, @AuthenticationPrincipal String userEmail) {
+        jobApplicationService.delete(id, userEmail);
     }
 }

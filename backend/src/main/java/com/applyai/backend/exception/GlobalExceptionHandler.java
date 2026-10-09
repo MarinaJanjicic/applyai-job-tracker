@@ -40,4 +40,30 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errors,HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(JobApplicationNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleJobApplicationNotFound(
+            JobApplicationNotFoundException ex){
+
+        ErrorResponse error=new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                java.time.LocalDateTime.now()
+        );
+                return new ResponseEntity<>(error,HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse>  handleUserNotFound(
+            UserNotFoundException ex){
+
+        ErrorResponse error=new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                java.time.LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(error,HttpStatus.NOT_FOUND);
+    }
+
 }
