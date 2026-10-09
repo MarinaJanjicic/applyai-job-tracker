@@ -12,6 +12,7 @@ import com.applyai.backend.exception.UserNotFoundException;
 import com.applyai.backend.repository.JobApplicationRepository;
 import com.applyai.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jndi.JndiObjectFactoryBean;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,7 +23,6 @@ public class JobApplicationService {
 
     private final JobApplicationRepository jobApplicationRepository;
     private final UserRepository userRepository;
-
     public CreateJobApplicationResponse create(CreateJobApplicationRequest dto, String userEmail){
 
         User user=userRepository.findByEmail(userEmail).orElseThrow(()->new UserNotFoundException("User not found"));
@@ -44,14 +44,23 @@ public class JobApplicationService {
 
     }
 
-    public List<CreateJobApplicationResponse> getAll(String userEmail){
+    public List<CreateJobApplicationResponse> getAll(String userEmail,ApplicationStatus status){
         User user=userRepository.findByEmail(userEmail).orElseThrow(()->new UserNotFoundException("User not found"));
+        List<JobApplication> jobApplications;
+        if(status!=null){
 
-        List<JobApplication> jobApplications=jobApplicationRepository.findAllByUserId(user.getId());
+            jobApplications=jobApplicationRepository.findAllByUserIdAndStatus(user.getId(),status);
 
-        return jobApplications.stream().map(jobApplication -> mapToResponse(jobApplication)
-        ).toList();
+        }else{
+           jobApplications=jobApplicationRepository.findAllByUserId(user.getId());
+
+        }
+        return jobApplications.stream()
+                .map(this::mapToResponse)
+                .toList();
+
     }
+
 
     public CreateJobApplicationResponse getById(Long id, String userEmail){
 
@@ -82,8 +91,6 @@ public class JobApplicationService {
         return mapToResponse(updated);
 
     }
-
-
     public void delete(Long id, String userEmail){
 
         User user=userRepository.findByEmail(userEmail).orElseThrow(()->new RuntimeException("User not found"));
@@ -92,6 +99,8 @@ public class JobApplicationService {
 
         jobApplicationRepository.delete(application);
     }
+
+
 
     private CreateJobApplicationResponse mapToResponse(JobApplication jobApplication){
         return new CreateJobApplicationResponse(

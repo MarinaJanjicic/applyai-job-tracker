@@ -4,6 +4,7 @@ package com.applyai.backend.controller;
 import com.applyai.backend.dto.jobapplication.CreateJobApplicationRequest;
 import com.applyai.backend.dto.jobapplication.CreateJobApplicationResponse;
 import com.applyai.backend.dto.jobapplication.UpdateJobApplicationRequest;
+import com.applyai.backend.entity.ApplicationStatus;
 import com.applyai.backend.service.JobApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,9 @@ public class JobApplicationController {
     }
 
     @GetMapping
-    public List<CreateJobApplicationResponse> getAll(@AuthenticationPrincipal String userEmail){
-        return jobApplicationService.getAll(userEmail);
+    public List<CreateJobApplicationResponse> getAll(@AuthenticationPrincipal String userEmail,
+                                                     @RequestParam (required = false) ApplicationStatus status){
+        return jobApplicationService.getAll(userEmail,status);
     }
 
     @GetMapping("/{id}")
