@@ -1,9 +1,11 @@
 package com.applyai.backend.service;
 
 
+import com.applyai.backend.dto.coverletter.CoverLetterResponse;
 import com.applyai.backend.dto.interview.InterviewFeedbackResponse;
 import com.applyai.backend.exception.GroqApiException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -11,6 +13,7 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import javax.print.attribute.HashPrintJobAttributeSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,5 +171,53 @@ public class GroqAiService {
 
         return feedbackResponse;
 
+    }
+
+    public CoverLetterResponse generateCoverLetter(String companyName,
+                                                   String position,
+                                                   String additionalInfo){
+        String prompt = "Write a professional cover letter for a "
+                + position + " position at " + companyName + ". "
+                + "Use the following information about the candidate: "
+                + additionalInfo + ". "
+                + "Keep the cover letter concise, professional, and tailored to the position and company. "
+                + "Do not invent skills, experience, or qualifications that are not provided. "
+                + "Return only the cover letter text without any additional explanation.";
+
+        Map<String,Object> requestBody=new HashMap<>();
+        requestBody.put("model" ,"openai/gpt-oss-20b");
+        Map<String,String> message=new HashMap<>();
+        message.put("role","user");
+        message.put("content",prompt);
+        requestBody.put("messages",List.of(message));
+
+        String response;
+
+        try{
+            response = restClient.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
+        }catch(RestClientResponseException e){
+            throw  new GroqApiException("Failed to generate cover letter");
+        }
+
+        JsonNode root;
+
+        try{
+            root=objectMapper.readTree(response);
+        }catch(JacksonException e){
+            throw new GroqApiException("Failed to parse Groq response");
+        }
+
+        JsonNode choices=root.get("choices");
+        JsonNode firstChoice=choices.get(0);
+        JsonNode messageNode=firstChoice.get("message");
+        JsonNode contentNode=messageNode.get("content");
+        String content=contentNode.asText();
+
+        return new CoverLetterResponse(content);
     }
 }

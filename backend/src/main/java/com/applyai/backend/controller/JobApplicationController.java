@@ -1,10 +1,13 @@
 package com.applyai.backend.controller;
 
 
+import com.applyai.backend.dto.coverletter.CoverLetterRequest;
+import com.applyai.backend.dto.coverletter.CoverLetterResponse;
 import com.applyai.backend.dto.jobapplication.CreateJobApplicationRequest;
 import com.applyai.backend.dto.jobapplication.CreateJobApplicationResponse;
 import com.applyai.backend.dto.jobapplication.UpdateJobApplicationRequest;
 import com.applyai.backend.entity.ApplicationStatus;
+import com.applyai.backend.service.CoverLetterService;
 import com.applyai.backend.service.JobApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ import java.util.List;
 public class JobApplicationController {
 
     private final JobApplicationService jobApplicationService;
+    private final CoverLetterService coverLetterService;
 
     @PostMapping
     public CreateJobApplicationResponse create(@RequestBody @Valid CreateJobApplicationRequest dto,
@@ -53,5 +57,13 @@ public class JobApplicationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id, @AuthenticationPrincipal String userEmail) {
         jobApplicationService.delete(id, userEmail);
+    }
+
+    @PostMapping("/{id}/cover-letter")
+    public CoverLetterResponse generateCoverLetter(
+            @PathVariable Long id, @Valid @RequestBody CoverLetterRequest request,
+            @AuthenticationPrincipal String userEmail
+            ){
+        return coverLetterService.generateCoverLetter(id, userEmail,request);
     }
 }
