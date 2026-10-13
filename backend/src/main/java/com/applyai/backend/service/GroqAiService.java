@@ -1,6 +1,7 @@
 package com.applyai.backend.service;
 
 
+import com.applyai.backend.dto.interview.InterviewFeedbackResponse;
 import com.applyai.backend.exception.GroqApiException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -98,5 +99,74 @@ public class GroqAiService {
                 .toList();
 
         return questions;
+    }
+
+    public InterviewFeedbackResponse evaluateAnswer(
+            String companyName,
+            String position,
+            String question,
+            String answer
+    ){
+        String prompt = "Evaluate the following interview answer for a "
+                + position + " position at " + companyName + ". "
+                + "Interview question: " + question + ". "
+                + "Candidate answer: " + answer + ". "
+                + "Give the answer a score from 1 to 10, provide brief feedback, "
+                + "and suggest how the candidate could improve the answer. "
+                + "Return only valid JSON in this exact format: "
+                + "{\"score\": 7, \"feedback\": \"Your feedback here\", "
+                + "\"suggestion\": \"Your suggestion here\"}";
+
+        Map<String,Object> requestBody=new HashMap<>();
+
+        requestBody.put("model","openai/gpt-oss-20b");
+
+        Map<String,String> message=new HashMap<>();
+
+        message.put("role","user");
+        message.put("content",prompt);
+
+        requestBody.put("messages",List.of(message));
+
+        String response;
+
+        try {
+            response = restClient.post()
+                    .uri("/chat/completions")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(String.class);
+        } catch (RestClientResponseException e) {
+            throw new GroqApiException("Failed to evaluate interview answer");
+        }
+
+        JsonNode root;
+        try{
+            root=objectMapper.readTree(response);
+        }catch(JacksonException exception){
+            throw new GroqApiException("Failed to parse Groq response");
+        }
+
+        JsonNode choices=root.get("choices");
+
+        JsonNode firstChoice=choices.get(0);
+
+        JsonNode messageNode=firstChoice.get("message");
+
+        JsonNode contentNode=messageNode.get("content");
+
+        String content=contentNode.asText();
+
+        InterviewFeedbackResponse feedbackResponse;
+        try{
+            feedbackResponse=
+                    objectMapper.readValue(content,InterviewFeedbackResponse.class);
+        }catch (JacksonException ex){
+            throw new GroqApiException("Failed to parse interview feedback");
+        }
+
+        return feedbackResponse;
+
     }
 }
