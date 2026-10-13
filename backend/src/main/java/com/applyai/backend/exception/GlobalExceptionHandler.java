@@ -66,4 +66,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error,HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(GroqApiException.class)
+    public ResponseEntity<ErrorResponse> handleGroqApi(
+            GroqApiException ex){
+
+        ErrorResponse error=new ErrorResponse(
+                HttpStatus.BAD_GATEWAY.value(),
+                ex.getMessage(),
+                java.time.LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_GATEWAY);
+    }
+
+
 }
